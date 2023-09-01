@@ -1,0 +1,26 @@
+{
+  "name": "com.mobx.serialization",
+  "version": "1.0.0",
+  "displayName": "Serialization",
+  "description": "Profile based multi platform serialization and savegame system.",
+  "unity": "2022.3",
+  "documentationUrl": "https://github.com/mobx-gmbh/com.mobx.serialization",
+  "changelogUrl": "https://github.com/mobx-gmbh/com.mobx.serialization/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/mobx-gmbh/com.mobx.serialization/blob/main/LICENSE.md",
+  "keywords": [
+    "savegame",
+    "serialization",
+    "persistent data"
+  ],
+  "author": {
+    "name": "MobX",
+    "email": "jonathan@mobx.app",
+    "url": "https://github.com/mobx-gmbh"
+  },
+  "type": "tool",
+  "dependencies": {
+    "com.cysharp.unitask": "2.3.3",
+    "com.mobx.mediator": "1.0.0",
+    "com.mobx.utilities": "1.0.0"
+  }
+}
