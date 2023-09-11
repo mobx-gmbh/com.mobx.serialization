@@ -26,7 +26,7 @@ namespace MobX.Serialization
         public FileData(T value, bool isValid, Exception exception)
         {
             _value = value;
-            IsValid = isValid;
+            IsValid = isValid && value != null;
             Exception = exception;
         }
 

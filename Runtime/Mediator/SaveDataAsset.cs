@@ -154,14 +154,19 @@ namespace MobX.Serialization.Mediator
         [Button]
         public void Load()
         {
+            Debug.Log("IO", "SaveDataAsset::Load");
             var profile = Profile;
+            Debug.Log("IO", $"profile ${profile} - key ${Key}");
 
             if (profile.HasFile(Key))
             {
+                Debug.Log("IO", "HasFile true");
                 profile.ResolveData(Key, out _storage);
+                Debug.Log("IO", $"Profile data resolved into ${_storage}");
                 return;
             }
 
+            Debug.Log("IO", "Profile data not resolved, creating new Storage");
             _storage = new Storage<T>(defaultValue);
         }
 

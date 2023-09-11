@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using MobX.Utilities;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace MobX.Serialization
@@ -13,7 +14,7 @@ namespace MobX.Serialization
 
         public Task<string> DecryptAsync(byte[] data, string passPhrase)
         {
-            var result = data == null ? null : Encoding.UTF8.GetString(data);
+            var result = data.IsNullOrEmpty() ? null : Encoding.UTF8.GetString(data);
             return Task.FromResult(result);
         }
 
@@ -25,7 +26,7 @@ namespace MobX.Serialization
 
         public string Decrypt(byte[] data, string passPhrase)
         {
-            var result = data == null ? null : Encoding.UTF8.GetString(data);
+            var result = data.IsNullOrEmpty() ? null : Encoding.UTF8.GetString(data);
             return result;
         }
     }

@@ -119,9 +119,9 @@ namespace MobX.Serialization
 
                 var sharedProfilePath = Path.Combine(SharedProfileFolder, SharedProfileHeader);
                 var sharedProfileData = await Storage.LoadAsync<Profile>(sharedProfilePath);
-                sharedProfile = sharedProfileData.IsValid
-                    ? sharedProfileData.Read()
-                    : new Profile(SharedProfileName, SharedProfileFolder, SharedProfileHeader);
+                sharedProfile = sharedProfileData.IsValid ? sharedProfileData.Read() : CreateSharedProfile();
+
+                static Profile CreateSharedProfile() => new(SharedProfileName, SharedProfileFolder, SharedProfileHeader);
 
                 await sharedProfile.LoadAsync();
 
@@ -131,7 +131,6 @@ namespace MobX.Serialization
 
                 sharedProfile.ResolveFile(ProfilePathsKey, out profilePathData);
                 var profilePaths = profilePathData.Paths;
-
                 var profileData = await Storage.LoadAsync<Profile>(activeProfilePath);
                 var profile = profileData.IsValid ? profileData.Read() : CreateDefaultProfile(profilePaths);
 
@@ -148,6 +147,7 @@ namespace MobX.Serialization
                     {
                         continue;
                     }
+
                     var fileData = await Storage.LoadAsync<Profile>(profilePath);
                     if (fileData.IsValid)
                     {
@@ -158,6 +158,7 @@ namespace MobX.Serialization
                 await UpdateActiveProfileAsyncInternal(profile);
 
                 State = FileSystemState.Initialized;
+
                 var converter = args.saveGameConverter.ValueOrDefault();
                 if (converter != null)
                 {
