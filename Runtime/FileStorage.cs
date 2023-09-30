@@ -35,7 +35,7 @@ namespace MobX.Serialization
 
         public void Initialize(in FileStorageArguments args)
         {
-            Debug.Log("Storage", "Initialization Started!");
+            Debug.Log("Storage", "Initialization Started");
             ForceSynchronous = args.ForceSynchronous;
             _encryptionKey = args.EncryptionKey;
             _exceptionLogging = args.ExceptionLogging;
@@ -48,7 +48,7 @@ namespace MobX.Serialization
             _fileOperations = args.FileOperations;
             _fileOperations.Initialize();
             _fileOperations.CreateDirectory(_dataPath);
-            Debug.Log("Storage", "Initialization Completed!");
+            Debug.Log("Storage", "Initialization Completed");
         }
 
         #endregion
@@ -210,7 +210,8 @@ namespace MobX.Serialization
                 isWritingAsync = true;
 
                 Debug.Log("IO", $"Start Writing Async {filePath}");
-                await _fileOperations.WriteAllBytesAsync(filePath, bytes, writeCancellationSource.Token).TimeoutAsync(TimeSpan.FromSeconds(5));
+                await _fileOperations.WriteAllBytesAsync(filePath, bytes, writeCancellationSource.Token)
+                    .TimeoutAsync(TimeSpan.FromSeconds(5));
                 Debug.Log("IO", $"Stop Writing Async {filePath}");
 
                 isWritingAsync = false;
