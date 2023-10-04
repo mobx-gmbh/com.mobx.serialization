@@ -16,21 +16,31 @@ namespace MobX.Serialization
 
         public async Task WriteAllBytesAsync(string path, byte[] content, CancellationToken cancellationToken = new())
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             await File.WriteAllBytesAsync(path, content, cancellationToken);
         }
 
         public void WriteAllBytes(string path, byte[] content)
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             File.WriteAllBytes(path, content);
         }
 
         public async Task<byte[]> ReadAllBytesAsync(string path, CancellationToken cancellationToken = new())
         {
+            if (File.Exists(path) is false)
+            {
+                return await Task.FromResult<byte[]>(null);
+            }
             return await File.ReadAllBytesAsync(path, cancellationToken);
         }
 
         public byte[] ReadAllBytes(string path)
         {
+            if (File.Exists(path) is false)
+            {
+                return null;
+            }
             return File.ReadAllBytes(path);
         }
 

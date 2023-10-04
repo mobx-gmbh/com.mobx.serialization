@@ -13,7 +13,7 @@ namespace MobX.Serialization.Mediator
     ///     Asset represents a value that can be saved and loaded to the persistent data storage.
     /// </summary>
     /// <typeparam name="T">The type of the saved value. Must be serializable!</typeparam>
-    public abstract class SaveDataAsset<T> : ValueAsset<T>
+    public abstract class SaveDataAsset<T> : ValueAsset<T>, ISaveDataAsset
     {
         #region Inspector & Data
 
@@ -75,15 +75,15 @@ namespace MobX.Serialization.Mediator
             set => SetValue(value);
         }
 
-        public override void SetValue(T newValue)
+        public override void SetValue(T value)
         {
-            var isEqual = EqualityComparer<T>.Default.Equals(newValue, _storage.value);
+            var isEqual = EqualityComparer<T>.Default.Equals(value, _storage.value);
             if (isEqual)
             {
                 return;
             }
-            _storage.value = newValue;
-            _changedEvent.Raise(newValue);
+            _storage.value = value;
+            _changedEvent.Raise(value);
             var profile = Profile;
             profile.Store(Key, _storage);
             if (autoSave)
