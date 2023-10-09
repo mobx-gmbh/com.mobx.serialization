@@ -8,9 +8,9 @@ namespace MobX.Serialization.Mediator
         [SerializeField] private float minValue;
         [SerializeField] private float maxValue = 1f;
 
-        public override void SetValue(float value)
+        public override void SetValue(float newValue)
         {
-            base.SetValue(value.Clamp(minValue, maxValue));
+            base.SetValue(newValue.Clamp(minValue, maxValue));
         }
     }
 }

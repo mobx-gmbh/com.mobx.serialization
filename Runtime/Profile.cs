@@ -33,6 +33,12 @@ namespace MobX.Serialization
             _saved ??= DateTime.TryParse(lastSaveTimeStamp, out var dateTime) ? dateTime : default(DateTime);
         public IReadOnlyCollection<FileHeader> FileHeaders => headerFiles.Values;
 
+        [Serializable]
+        private struct Storage<T> where T : struct
+        {
+            public T data;
+        }
+
         #endregion
 
 
@@ -145,6 +151,41 @@ namespace MobX.Serialization
 #endif
         }
 
+        public void StoreData(string fileName, int data, StoreOptions options = default)
+        {
+            StoreData(fileName, new Storage<int> {data = data}, options);
+        }
+
+        public void StoreData(string fileName, long data, StoreOptions options = default)
+        {
+            StoreData(fileName, new Storage<long> {data = data}, options);
+        }
+
+        public void StoreData(string fileName, float data, StoreOptions options = default)
+        {
+            StoreData(fileName, new Storage<float> {data = data}, options);
+        }
+
+        public void StoreData(string fileName, double data, StoreOptions options = default)
+        {
+            StoreData(fileName, new Storage<double> {data = data}, options);
+        }
+
+        public void StoreData(string fileName, byte data, StoreOptions options = default)
+        {
+            StoreData(fileName, new Storage<byte> {data = data}, options);
+        }
+
+        public void StoreData(string fileName, short data, StoreOptions options = default)
+        {
+            StoreData(fileName, new Storage<short> {data = data}, options);
+        }
+
+        public void StoreData(string fileName, bool data, StoreOptions options = default)
+        {
+            StoreData(fileName, new Storage<bool> {data = data}, options);
+        }
+
         #endregion
 
 
@@ -231,6 +272,48 @@ namespace MobX.Serialization
             StoreAsset(fileName, asset, options);
         }
 
+        public void ResolveData(string fileName, out int data, StoreOptions options = default)
+        {
+            ResolveData(fileName, out Storage<int> storage, options);
+            data = storage.data;
+        }
+
+        public void ResolveData(string fileName, out long data, StoreOptions options = default)
+        {
+            ResolveData(fileName, out Storage<long> storage, options);
+            data = storage.data;
+        }
+
+        public void ResolveData(string fileName, out float data, StoreOptions options = default)
+        {
+            ResolveData(fileName, out Storage<float> storage, options);
+            data = storage.data;
+        }
+
+        public void ResolveData(string fileName, out double data, StoreOptions options = default)
+        {
+            ResolveData(fileName, out Storage<double> storage, options);
+            data = storage.data;
+        }
+
+        public void ResolveData(string fileName, out byte data, StoreOptions options = default)
+        {
+            ResolveData(fileName, out Storage<byte> storage, options);
+            data = storage.data;
+        }
+
+        public void ResolveData(string fileName, out short data, StoreOptions options = default)
+        {
+            ResolveData(fileName, out Storage<short> storage, options);
+            data = storage.data;
+        }
+
+        public void ResolveData(string fileName, out bool data, StoreOptions options = default)
+        {
+            ResolveData(fileName, out Storage<bool> storage, options);
+            data = storage.data;
+        }
+
         #endregion
 
 
@@ -302,6 +385,11 @@ namespace MobX.Serialization
             return file;
         }
 
+        public int GetData(string fileName)
+        {
+            return GetData<Storage<int>>(fileName).data;
+        }
+
         public void GetAsset<T>(string fileName, T asset) where T : ScriptableObject
         {
             Assert.IsTrue(IsLoaded);
@@ -321,6 +409,13 @@ namespace MobX.Serialization
 
 
         #region Delete
+
+        public bool TryGetData(string fileName, out int data)
+        {
+            var result = TryGetData(fileName, out Storage<int> storage);
+            data = storage.data;
+            return result;
+        }
 
         public void DeleteEntry(string fileName)
         {

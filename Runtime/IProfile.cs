@@ -27,6 +27,20 @@ namespace MobX.Serialization
 
         void StoreAsset<T>(string fileName, T asset, StoreOptions options = default) where T : ScriptableObject;
 
+        void StoreData(string fileName, int data, StoreOptions options = default);
+
+        void StoreData(string fileName, long data, StoreOptions options = default);
+
+        void StoreData(string fileName, float data, StoreOptions options = default);
+
+        void StoreData(string fileName, double data, StoreOptions options = default);
+
+        void StoreData(string fileName, byte data, StoreOptions options = default);
+
+        void StoreData(string fileName, short data, StoreOptions options = default);
+
+        void StoreData(string fileName, bool data, StoreOptions options = default);
+
         #endregion
 
 
@@ -40,6 +54,20 @@ namespace MobX.Serialization
 
         void ResolveAsset<T>(string fileName, T asset, StoreOptions options = default) where T : ScriptableObject;
 
+        void ResolveData(string fileName, out int data, StoreOptions options = default);
+
+        void ResolveData(string fileName, out long data, StoreOptions options = default);
+
+        void ResolveData(string fileName, out float data, StoreOptions options = default);
+
+        void ResolveData(string fileName, out double data, StoreOptions options = default);
+
+        void ResolveData(string fileName, out byte data, StoreOptions options = default);
+
+        void ResolveData(string fileName, out short data, StoreOptions options = default);
+
+        void ResolveData(string fileName, out bool data, StoreOptions options = default);
+
         #endregion
 
 
@@ -51,6 +79,8 @@ namespace MobX.Serialization
 
         T GetData<T>(string fileName) where T : struct;
 
+        int GetData(string fileName);
+
         void GetAsset<T>(string fileName, T asset) where T : ScriptableObject;
 
         bool TryGetFile<T>(string fileName, out T file) where T : class;
@@ -58,6 +88,8 @@ namespace MobX.Serialization
         bool TryGetData<T>(string fileName, out T file) where T : struct;
 
         bool TryGetAsset<T>(string fileName, T asset) where T : ScriptableObject;
+
+        bool TryGetData(string fileName, out int data);
 
         #endregion
 

@@ -75,15 +75,15 @@ namespace MobX.Serialization.Mediator
             set => SetValue(value);
         }
 
-        public override void SetValue(T value)
+        public override void SetValue(T newValue)
         {
-            var isEqual = EqualityComparer<T>.Default.Equals(value, _storage.value);
+            var isEqual = EqualityComparer<T>.Default.Equals(newValue, _storage.value);
             if (isEqual)
             {
                 return;
             }
-            _storage.value = value;
-            _changedEvent.Raise(value);
+            _storage.value = newValue;
+            _changedEvent.Raise(newValue);
             var profile = Profile;
             profile.Store(Key, _storage);
             if (autoSave)
