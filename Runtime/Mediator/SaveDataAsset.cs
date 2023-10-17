@@ -18,6 +18,7 @@ namespace MobX.Serialization.Mediator
         #region Inspector & Data
 
         [NonSerialized] private Storage<T> _storage;
+        [Foldout("Save Data")]
         [SerializeField] private RuntimeGUID guid;
         [SerializeField] private T defaultValue;
         [Tooltip("Automatically saves the data every time it is updated")]
@@ -69,6 +70,7 @@ namespace MobX.Serialization.Mediator
         #region Value
 
         [ShowInInspector]
+        [Foldout("Save Data")]
         public override T Value
         {
             get => GetValue();
@@ -143,6 +145,7 @@ namespace MobX.Serialization.Mediator
 
         [Button]
         [DrawLine]
+        [Foldout("Save Data")]
         public void Save()
         {
             var profile = Profile;
@@ -152,6 +155,7 @@ namespace MobX.Serialization.Mediator
         }
 
         [Button]
+        [Foldout("Save Data")]
         public void Load()
         {
             Debug.Log("IO", "SaveDataAsset::Load");
@@ -171,6 +175,7 @@ namespace MobX.Serialization.Mediator
         }
 
         [Button("Reset")]
+        [Foldout("Save Data")]
         public void ResetData()
         {
             var profile = Profile;
