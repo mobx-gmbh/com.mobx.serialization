@@ -1,11 +1,13 @@
 ﻿using Cysharp.Threading.Tasks;
 using MobX.Utilities;
 using MobX.Utilities.Collections;
+using MobX.Utilities.Pooling;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using UnityEngine;
 
 namespace MobX.Serialization
 {
@@ -52,16 +54,24 @@ namespace MobX.Serialization
         private static IFileStorage CreateFileStorage(in FileSystemArgs args)
         {
             Debug.Log("File System", "Creating File Storage");
-            RootFolder = args.rootFolder.IsNotNullOrWhitespace() ? args.rootFolder : string.Empty;
+            var rootFolderBuilder = StringBuilderPool.Get();
+            rootFolderBuilder.Append(args.rootFolder.IsNotNullOrWhitespace() ? args.rootFolder : string.Empty);
+            if (args.versionRootFolder)
+            {
+                rootFolderBuilder.Append('_');
+                rootFolderBuilder.Append(args.useUnityVersion ? Application.version : args.version);
+            }
+            RootFolder = StringBuilderPool.BuildAndRelease(rootFolderBuilder);
+
             var encryptionProvider = args.EncryptionProvider ?? args.encryptionAsset.ValueOrDefault();
             var encryptionKey = args.encryptionKey.TryGetValue(out var key) && key.IsNotNullOrWhitespace()
-                ? args.encryptionKey.Value
+                ? key
                 : DefaultEncryptionKey;
 
             var provider = ArrayUtility.Cast<EncryptionProviderAsset, IEncryptionProvider>(args.encryptionProvider);
 
             var fileOperations = args.fileStorageProvider.ValueOrDefault() as IFileOperations ??
-                new MonoFileOperations();
+                                 new MonoFileOperations();
 
             var fileStorageArguments = new FileStorageArguments(
                 RootFolder,
@@ -76,7 +86,7 @@ namespace MobX.Serialization
             var storage = new FileStorage();
             storage.Initialize(fileStorageArguments);
 
-            Debug.Log("File System", $"Created File Storage! Using {fileOperations} file operation interface!");
+            Debug.Log("File System", $"Created {fileOperations} File Storage!");
             return storage;
         }
 
@@ -112,7 +122,7 @@ namespace MobX.Serialization
                 }
 
                 profileLimit = args.profileLimit.ValueOrDefault() > 0 ? args.profileLimit : uint.MaxValue;
-                version = args.version ?? string.Empty;
+                version = args.useUnityVersion ? Application.version : args.version ?? string.Empty;
                 validator = new FileValidator(args);
                 Storage = CreateFileStorage(args);
                 defaultProfileName = args.defaultProfileName;
@@ -121,7 +131,10 @@ namespace MobX.Serialization
                 var sharedProfileData = await Storage.LoadAsync<Profile>(sharedProfilePath);
                 sharedProfile = sharedProfileData.IsValid ? sharedProfileData.Read() : CreateSharedProfile();
 
-                static Profile CreateSharedProfile() => new(SharedProfileName, SharedProfileFolder, SharedProfileHeader);
+                static Profile CreateSharedProfile()
+                {
+                    return new Profile(SharedProfileName, SharedProfileFolder, SharedProfileHeader);
+                }
 
                 await sharedProfile.LoadAsync();
 
@@ -203,7 +216,7 @@ namespace MobX.Serialization
                 }
 
                 profileLimit = args.profileLimit.ValueOrDefault() > 0 ? args.profileLimit : uint.MaxValue;
-                version = args.version ?? string.Empty;
+                version = args.useUnityVersion ? Application.version : args.version ?? string.Empty;
                 validator = new FileValidator(args);
                 Storage = CreateFileStorage(args);
                 defaultProfileName = args.defaultProfileName;
@@ -490,14 +503,14 @@ namespace MobX.Serialization
             {
                 return false;
             }
-            if (activeProfile is { IsLoaded: true })
+            if (activeProfile is {IsLoaded: true})
             {
                 activeProfile.Unload();
             }
             Debug.Log(Log, $"Switch active profile from: {activeProfile.ToNullString()} to {profile}");
             activeProfile = profile;
             await activeProfile.LoadAsync();
-            profileCache.Update(activeProfile.HeaderFilePath, activeProfile);
+            profileCache.AddOrUpdate(activeProfile.HeaderFilePath, activeProfile);
             fileSystemData.activeProfileFilePath = profile.HeaderFilePath;
             sharedProfile.StoreData(FileSystemDataSave, fileSystemData);
             if (IsInitialized)
@@ -519,14 +532,14 @@ namespace MobX.Serialization
             {
                 return false;
             }
-            if (activeProfile is { IsLoaded: true })
+            if (activeProfile is {IsLoaded: true})
             {
                 activeProfile.Unload();
             }
             Debug.Log(Log, $"Switch active profile from: {activeProfile.ToNullString()} to {profile}");
             activeProfile = profile;
             activeProfile.Load();
-            profileCache.Update(activeProfile.HeaderFilePath, activeProfile);
+            profileCache.AddOrUpdate(activeProfile.HeaderFilePath, activeProfile);
             fileSystemData.activeProfileFilePath = profile.HeaderFilePath;
             sharedProfile.StoreData(FileSystemDataSave, fileSystemData);
             if (IsInitialized)

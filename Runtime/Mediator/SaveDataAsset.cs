@@ -1,5 +1,6 @@
 ﻿using MobX.Mediator.Events;
 using MobX.Mediator.Values;
+using MobX.Utilities.Callbacks;
 using MobX.Utilities.Inspector;
 using MobX.Utilities.Types;
 using System;
@@ -23,6 +24,7 @@ namespace MobX.Serialization.Mediator
         [SerializeField] private T defaultValue;
         [Tooltip("Automatically saves the data every time it is updated")]
         [SerializeField] private bool autoSave;
+        [SerializeField] private bool saveOnApplicationQuit = true;
         [Tooltip("The level to store the data on. Either profile specific or shared between profiles")]
         [SerializeField] private StorageLevel storageLevel = StorageLevel.Profile;
         [Tooltip("The key used to save the value. Only use asset name for debugging!")]
@@ -61,7 +63,6 @@ namespace MobX.Serialization.Mediator
         {
             AssetGUID = 0,
             AssetName = 1
-            // TODO: Add Custom GUID
         }
 
         #endregion
@@ -112,6 +113,7 @@ namespace MobX.Serialization.Mediator
         protected override void OnEnable()
         {
             base.OnEnable();
+            RuntimeGUID.Create(this, ref guid);
             FileSystem.InitializationCompleted += OnFileSystemInitialized;
             FileSystem.ProfileChanged += OnProfileChanged;
 
@@ -158,19 +160,14 @@ namespace MobX.Serialization.Mediator
         [Foldout("Save Data")]
         public void Load()
         {
-            Debug.Log("IO", "SaveDataAsset::Load");
             var profile = Profile;
-            Debug.Log("IO", $"profile ${profile} - key ${Key}");
 
             if (profile.HasFile(Key))
             {
-                Debug.Log("IO", "HasFile true");
                 profile.ResolveData(Key, out _storage);
-                Debug.Log("IO", $"Profile data resolved into ${_storage}");
                 return;
             }
 
-            Debug.Log("IO", "Profile data not resolved, creating new Storage");
             _storage = new Storage<T>(defaultValue);
         }
 
@@ -181,6 +178,15 @@ namespace MobX.Serialization.Mediator
             var profile = Profile;
             profile.DeleteEntry(Key);
             _storage = new Storage<T>(defaultValue);
+        }
+
+        [CallbackOnApplicationQuit]
+        private void Shutdown()
+        {
+            if (saveOnApplicationQuit)
+            {
+                Save();
+            }
         }
 
         #endregion

@@ -12,6 +12,12 @@ namespace MobX.Serialization
         [Tooltip("The root folder fot the files system (relative to the application data path).")]
         public string rootFolder;
 
+        [Tooltip("When enabled, root folder are versioned.")]
+        public bool versionRootFolder;
+
+        [Tooltip("When enabled, the unity version will be used instead of the version string defined below")]
+        public bool useUnityVersion;
+
         [Tooltip("The root folder fot the files system (relative to the application data path).")]
         public string version;
 

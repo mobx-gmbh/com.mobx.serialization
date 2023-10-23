@@ -110,7 +110,7 @@ namespace MobX.Serialization
             Assert.IsTrue(IsLoaded);
             FileSystem.Validator.ValidateFileName(ref fileName);
 
-            _fileBuffer.Update(fileName, file);
+            _fileBuffer.AddOrUpdate(fileName, file);
             UpdateHeader<T>(fileName, options);
         }
 
@@ -119,7 +119,7 @@ namespace MobX.Serialization
             Assert.IsTrue(IsLoaded);
             FileSystem.Validator.ValidateFileName(ref fileName);
 
-            _fileBuffer.Update(fileName, file);
+            _fileBuffer.AddOrUpdate(fileName, file);
             UpdateHeader<T>(fileName, options);
         }
 
@@ -128,7 +128,7 @@ namespace MobX.Serialization
             Assert.IsTrue(IsLoaded);
             FileSystem.Validator.ValidateFileName(ref fileName);
 
-            _fileBuffer.Update(fileName, data);
+            _fileBuffer.AddOrUpdate(fileName, data);
 
             UpdateHeader<T>(fileName, options);
         }
@@ -142,7 +142,7 @@ namespace MobX.Serialization
 
             var fileData = FileData.FromSuccess(data);
 
-            _dataBuffer.Update(fileName, fileData);
+            _dataBuffer.AddOrUpdate(fileName, fileData);
 
             UpdateHeader<T>(fileName, options);
 
@@ -210,7 +210,7 @@ namespace MobX.Serialization
             }
 
             file = data.Read<T>();
-            _fileBuffer.Update(fileName, data.Read<T>());
+            _fileBuffer.AddOrUpdate(fileName, data.Read<T>());
             _dataBuffer.Remove(fileName);
         }
 
@@ -234,7 +234,7 @@ namespace MobX.Serialization
             }
 
             file = data.Read<T>();
-            _fileBuffer.Update(fileName, data.Read<T>());
+            _fileBuffer.AddOrUpdate(fileName, data.Read<T>());
             _dataBuffer.Remove(fileName);
         }
 
@@ -257,7 +257,7 @@ namespace MobX.Serialization
             }
 
             file = data.Read<T>();
-            _fileBuffer.Update(fileName, data.Read<T>());
+            _fileBuffer.AddOrUpdate(fileName, data.Read<T>());
             _dataBuffer.Remove(fileName);
         }
 
@@ -335,7 +335,7 @@ namespace MobX.Serialization
             }
 
             var file = data.Read<T>();
-            _fileBuffer.Update(fileName, data.Read<T>());
+            _fileBuffer.AddOrUpdate(fileName, data.Read<T>());
             _dataBuffer.Remove(fileName);
             SetDirty(fileName);
             return file;
@@ -357,7 +357,7 @@ namespace MobX.Serialization
             }
 
             var file = data.Read<T>();
-            _fileBuffer.Update(fileName, data.Read<T>());
+            _fileBuffer.AddOrUpdate(fileName, data.Read<T>());
             _dataBuffer.Remove(fileName);
             SetDirty(fileName);
             return file;
@@ -379,7 +379,7 @@ namespace MobX.Serialization
             }
 
             var file = data.Read<T>();
-            _fileBuffer.Update(fileName, data.Read<T>());
+            _fileBuffer.AddOrUpdate(fileName, data.Read<T>());
             _dataBuffer.Remove(fileName);
             SetDirty(fileName);
             return file;
@@ -477,7 +477,7 @@ namespace MobX.Serialization
             }
 
             file = data.Read<T>();
-            _fileBuffer.Update(fileName, data.Read<T>());
+            _fileBuffer.AddOrUpdate(fileName, data.Read<T>());
             _dataBuffer.Remove(fileName);
             return true;
         }
@@ -500,7 +500,7 @@ namespace MobX.Serialization
             }
 
             file = data.Read<T>();
-            _fileBuffer.Update(fileName, data.Read<T>());
+            _fileBuffer.AddOrUpdate(fileName, data.Read<T>());
             _dataBuffer.Remove(fileName);
             return true;
         }
