@@ -12,6 +12,12 @@ using UnityEngine.Pool;
 namespace MobX.Serialization
 {
     [Serializable]
+    public struct DataStorage<T> where T : struct
+    {
+        public T data;
+    }
+
+    [Serializable]
     internal class Profile : IProfile
     {
         #region Fields & Properties
@@ -32,12 +38,6 @@ namespace MobX.Serialization
         public DateTime Saved =>
             _saved ??= DateTime.TryParse(lastSaveTimeStamp, out var dateTime) ? dateTime : default(DateTime);
         public IReadOnlyCollection<FileHeader> FileHeaders => headerFiles.Values;
-
-        [Serializable]
-        private struct Storage<T> where T : struct
-        {
-            public T data;
-        }
 
         #endregion
 
@@ -153,37 +153,58 @@ namespace MobX.Serialization
 
         public void StoreData(string fileName, int data, StoreOptions options = default)
         {
-            StoreData(fileName, new Storage<int> {data = data}, options);
+            StoreData(fileName, new DataStorage<int>
+            {
+                data = data
+            }, options);
         }
 
         public void StoreData(string fileName, long data, StoreOptions options = default)
         {
-            StoreData(fileName, new Storage<long> {data = data}, options);
+            StoreData(fileName, new DataStorage<long>
+            {
+                data = data
+            }, options);
         }
 
         public void StoreData(string fileName, float data, StoreOptions options = default)
         {
-            StoreData(fileName, new Storage<float> {data = data}, options);
+            StoreData(fileName, new DataStorage<float>
+            {
+                data = data
+            }, options);
         }
 
         public void StoreData(string fileName, double data, StoreOptions options = default)
         {
-            StoreData(fileName, new Storage<double> {data = data}, options);
+            StoreData(fileName, new DataStorage<double>
+            {
+                data = data
+            }, options);
         }
 
         public void StoreData(string fileName, byte data, StoreOptions options = default)
         {
-            StoreData(fileName, new Storage<byte> {data = data}, options);
+            StoreData(fileName, new DataStorage<byte>
+            {
+                data = data
+            }, options);
         }
 
         public void StoreData(string fileName, short data, StoreOptions options = default)
         {
-            StoreData(fileName, new Storage<short> {data = data}, options);
+            StoreData(fileName, new DataStorage<short>
+            {
+                data = data
+            }, options);
         }
 
         public void StoreData(string fileName, bool data, StoreOptions options = default)
         {
-            StoreData(fileName, new Storage<bool> {data = data}, options);
+            StoreData(fileName, new DataStorage<bool>
+            {
+                data = data
+            }, options);
         }
 
         #endregion
@@ -274,43 +295,43 @@ namespace MobX.Serialization
 
         public void ResolveData(string fileName, out int data, StoreOptions options = default)
         {
-            ResolveData(fileName, out Storage<int> storage, options);
+            ResolveData(fileName, out DataStorage<int> storage, options);
             data = storage.data;
         }
 
         public void ResolveData(string fileName, out long data, StoreOptions options = default)
         {
-            ResolveData(fileName, out Storage<long> storage, options);
+            ResolveData(fileName, out DataStorage<long> storage, options);
             data = storage.data;
         }
 
         public void ResolveData(string fileName, out float data, StoreOptions options = default)
         {
-            ResolveData(fileName, out Storage<float> storage, options);
+            ResolveData(fileName, out DataStorage<float> storage, options);
             data = storage.data;
         }
 
         public void ResolveData(string fileName, out double data, StoreOptions options = default)
         {
-            ResolveData(fileName, out Storage<double> storage, options);
+            ResolveData(fileName, out DataStorage<double> storage, options);
             data = storage.data;
         }
 
         public void ResolveData(string fileName, out byte data, StoreOptions options = default)
         {
-            ResolveData(fileName, out Storage<byte> storage, options);
+            ResolveData(fileName, out DataStorage<byte> storage, options);
             data = storage.data;
         }
 
         public void ResolveData(string fileName, out short data, StoreOptions options = default)
         {
-            ResolveData(fileName, out Storage<short> storage, options);
+            ResolveData(fileName, out DataStorage<short> storage, options);
             data = storage.data;
         }
 
         public void ResolveData(string fileName, out bool data, StoreOptions options = default)
         {
-            ResolveData(fileName, out Storage<bool> storage, options);
+            ResolveData(fileName, out DataStorage<bool> storage, options);
             data = storage.data;
         }
 
@@ -387,7 +408,7 @@ namespace MobX.Serialization
 
         public int GetData(string fileName)
         {
-            return GetData<Storage<int>>(fileName).data;
+            return GetData<DataStorage<int>>(fileName).data;
         }
 
         public void GetAsset<T>(string fileName, T asset) where T : ScriptableObject
@@ -412,7 +433,7 @@ namespace MobX.Serialization
 
         public bool TryGetData(string fileName, out int data)
         {
-            var result = TryGetData(fileName, out Storage<int> storage);
+            var result = TryGetData(fileName, out DataStorage<int> storage);
             data = storage.data;
             return result;
         }
