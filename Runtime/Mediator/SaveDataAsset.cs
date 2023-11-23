@@ -1,6 +1,5 @@
 ﻿using MobX.Mediator.Events;
 using MobX.Mediator.Values;
-using MobX.Utilities.Callbacks;
 using MobX.Utilities.Inspector;
 using MobX.Utilities.Types;
 using System;
@@ -22,9 +21,6 @@ namespace MobX.Serialization.Mediator
         [Foldout("Save Data")]
         [SerializeField] private RuntimeGUID guid;
         [SerializeField] private T defaultValue;
-        [Tooltip("Automatically saves the data every time it is updated")]
-        [SerializeField] private bool autoSave;
-        [SerializeField] private bool saveOnApplicationQuit = true;
         [Tooltip("The level to store the data on. Either profile specific or shared between profiles")]
         [SerializeField] private StorageLevel storageLevel = StorageLevel.Profile;
         [Tooltip("The key used to save the value. Only use asset name for debugging!")]
@@ -85,14 +81,10 @@ namespace MobX.Serialization.Mediator
             {
                 return;
             }
-            _storage.value = newValue;
+            ref var valueRef = ref GetValueRef();
+            valueRef = newValue;
+            Save();
             _changedEvent.Raise(newValue);
-            var profile = Profile;
-            profile.Store(Key, _storage);
-            if (autoSave)
-            {
-                profile.SaveFile(Key);
-            }
         }
 
         public override T GetValue()
@@ -151,8 +143,7 @@ namespace MobX.Serialization.Mediator
         public void Save()
         {
             var profile = Profile;
-
-            profile.Store(Key, _storage);
+            profile.StoreData(Key, _storage);
             profile.SaveFile(Key);
         }
 
@@ -178,15 +169,6 @@ namespace MobX.Serialization.Mediator
             var profile = Profile;
             profile.DeleteEntry(Key);
             _storage = new Storage<T>(defaultValue);
-        }
-
-        [CallbackOnApplicationQuit]
-        private void Shutdown()
-        {
-            if (saveOnApplicationQuit)
-            {
-                Save();
-            }
         }
 
         #endregion

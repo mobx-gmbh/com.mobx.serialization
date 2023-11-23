@@ -71,7 +71,7 @@ namespace MobX.Serialization
             var provider = ArrayUtility.Cast<EncryptionProviderAsset, IEncryptionProvider>(args.encryptionProvider);
 
             var fileOperations = args.fileStorageProvider.ValueOrDefault() as IFileOperations ??
-                                 new MonoFileOperations();
+                new MonoFileOperations();
 
             var fileStorageArguments = new FileStorageArguments(
                 RootFolder,
@@ -131,10 +131,7 @@ namespace MobX.Serialization
                 var sharedProfileData = await Storage.LoadAsync<Profile>(sharedProfilePath);
                 sharedProfile = sharedProfileData.IsValid ? sharedProfileData.Read() : CreateSharedProfile();
 
-                static Profile CreateSharedProfile()
-                {
-                    return new Profile(SharedProfileName, SharedProfileFolder, SharedProfileHeader);
-                }
+                static Profile CreateSharedProfile() => new(SharedProfileName, SharedProfileFolder, SharedProfileHeader);
 
                 await sharedProfile.LoadAsync();
 
@@ -503,7 +500,7 @@ namespace MobX.Serialization
             {
                 return false;
             }
-            if (activeProfile is {IsLoaded: true})
+            if (activeProfile is { IsLoaded: true })
             {
                 activeProfile.Unload();
             }
@@ -517,7 +514,6 @@ namespace MobX.Serialization
             {
                 ProfileChanged?.Invoke(activeProfile);
             }
-            activeProfile.Save();
             sharedProfile.Save();
             return true;
         }
@@ -532,7 +528,7 @@ namespace MobX.Serialization
             {
                 return false;
             }
-            if (activeProfile is {IsLoaded: true})
+            if (activeProfile is { IsLoaded: true })
             {
                 activeProfile.Unload();
             }
@@ -546,7 +542,6 @@ namespace MobX.Serialization
             {
                 ProfileChanged?.Invoke(activeProfile);
             }
-            activeProfile.Save();
             sharedProfile.Save();
             return true;
         }

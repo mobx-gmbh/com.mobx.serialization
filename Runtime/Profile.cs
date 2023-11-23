@@ -31,6 +31,7 @@ namespace MobX.Serialization
         public string FolderName => folderName;
 
         public string Version => version;
+        public string UnityVersion => unityVersion;
 
         public DateTime Created =>
             _created ??= DateTime.TryParse(createdTimeStamp, out var dateTime) ? dateTime : default(DateTime);
@@ -62,6 +63,7 @@ namespace MobX.Serialization
         [SerializeField] private string createdTimeStamp;
         [SerializeField] private string lastSaveTimeStamp;
         [SerializeField] private string version;
+        [SerializeField] private string unityVersion;
         [SerializeField] private Map<string, FileHeader> headerFiles;
 
         #endregion
@@ -578,6 +580,7 @@ namespace MobX.Serialization
             FileSystem.Validator.ValidateFileName(ref fileName);
 
             version = FileSystem.Version;
+            unityVersion = Application.version;
             lastSaveTimeStamp = DateTime.Now.ToString(CultureInfo.InvariantCulture);
 
             var filePath = Path.Combine(folderName, fileName);
@@ -604,6 +607,7 @@ namespace MobX.Serialization
         {
             lastSaveTimeStamp = DateTime.Now.ToString(CultureInfo.InvariantCulture);
             version = FileSystem.Version;
+            unityVersion = Application.version;
             foreach (var header in files)
             {
                 var fileName = header.FileName;
@@ -823,6 +827,7 @@ namespace MobX.Serialization
             this.headerName = headerName;
             createdTimeStamp = DateTime.Now.ToString(CultureInfo.InvariantCulture);
             version = FileSystem.Version;
+            unityVersion = Application.version;
 
             headerFiles = new Map<string, FileHeader>();
         }

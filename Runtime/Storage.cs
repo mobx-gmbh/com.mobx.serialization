@@ -12,4 +12,19 @@ namespace MobX.Serialization
             this.value = value;
         }
     }
+
+    [Serializable]
+    public class ManagedStorage<T>
+    {
+        public T value;
+
+        public ManagedStorage(T value)
+        {
+            this.value = value;
+        }
+
+        public ManagedStorage()
+        {
+        }
+    }
 }
