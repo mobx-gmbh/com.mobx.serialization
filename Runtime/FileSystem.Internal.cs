@@ -112,7 +112,7 @@ namespace MobX.Serialization
                     return;
                 }
 
-                Debug.Log(Log, "Initialization Started");
+                Debug.Log(Log, "Initialization Started", Verbosity.Message);
                 State = FileSystemState.Initializing;
 
                 try
@@ -186,7 +186,7 @@ namespace MobX.Serialization
                 sharedProfile.Save();
 
                 initializationTaskCompletionSource.TrySetResult(null);
-                Debug.Log(Log, "Initialization Completed");
+                Debug.Log(Log, "Initialization Completed", Verbosity.Message);
             }
             catch (Exception exception)
             {
@@ -207,7 +207,7 @@ namespace MobX.Serialization
                     return;
                 }
 
-                Debug.Log(Log, "Initialization Started");
+                Debug.Log(Log, "Initialization Started", Verbosity.Message);
                 State = FileSystemState.Initializing;
 
                 try
@@ -280,7 +280,7 @@ namespace MobX.Serialization
                 sharedProfile.Save();
 
                 initializationTaskCompletionSource.TrySetResult(null);
-                Debug.Log(Log, "Initialization Completed");
+                Debug.Log(Log, "Initialization Completed", Verbosity.Message);
             }
             catch (Exception exception)
             {
@@ -305,7 +305,7 @@ namespace MobX.Serialization
             }
 
             State = FileSystemState.Shutdown;
-            Debug.Log(Log, "Shutdown Started");
+            Debug.Log(Log, "Shutdown Started", Verbosity.Message);
             try
             {
                 ShutdownStarted?.Invoke();
@@ -331,7 +331,7 @@ namespace MobX.Serialization
             initializationTaskCompletionSource.TrySetCanceled();
             initializationTaskCompletionSource = new TaskCompletionSource<object>();
             State = FileSystemState.Uninitialized;
-            Debug.Log(Log, "Shutdown Completed");
+            Debug.Log(Log, "Shutdown Completed", Verbosity.Message);
             ShutdownCompleted?.Invoke();
         }
 
@@ -343,7 +343,7 @@ namespace MobX.Serialization
             }
 
             State = FileSystemState.Shutdown;
-            Debug.Log(Log, "Shutdown Started");
+            Debug.Log(Log, "Shutdown Started", Verbosity.Message);
             try
             {
                 ShutdownStarted?.Invoke();
@@ -369,7 +369,7 @@ namespace MobX.Serialization
             initializationTaskCompletionSource.TrySetCanceled();
             initializationTaskCompletionSource = new TaskCompletionSource<object>();
             State = FileSystemState.Uninitialized;
-            Debug.Log(Log, "Shutdown Completed");
+            Debug.Log(Log, "Shutdown Completed", Verbosity.Message);
             ShutdownCompleted?.Invoke();
         }
 
