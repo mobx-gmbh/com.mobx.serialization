@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace MobX.Serialization
 {
@@ -18,6 +19,15 @@ namespace MobX.Serialization
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => State == FileSystemState.Initialized;
+        }
+
+        /// <summary>
+        ///     Awaitable initialization operation.
+        /// </summary>
+        [PublicAPI]
+        public static Task AwaitInitializationAsync()
+        {
+            return initializationTaskCompletionSource.Task;
         }
 
         /// <summary>

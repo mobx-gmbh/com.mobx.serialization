@@ -2,6 +2,20 @@
 
 namespace MobX.Serialization
 {
+    /*
+     * Simplify API
+     *
+     * public void SaveFile<T>(string fileName, T value, StoreOptions options = default);
+     * public void UpdateFile<T>(string fileName, T value, StoreOptions options = default);
+     * public void LoadFile<T>(string fileName, out T value, StoreOptions options = default);
+     * public void ResolveFile<T>(string fileName, ref T value, StoreOptions options = default);
+     * public void Delete<T>(string fileName);
+     * public MetaData GetMetaData(string fileName);
+     *
+     * Save();
+     * Load();
+     */
+
     public interface IProfile
     {
         #region Information

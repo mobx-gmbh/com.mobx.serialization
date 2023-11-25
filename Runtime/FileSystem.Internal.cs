@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MobX.Serialization
@@ -46,6 +47,8 @@ namespace MobX.Serialization
         private static string version = string.Empty;
         private static FileSystemData fileSystemData;
 
+        private static TaskCompletionSource<object> initializationTaskCompletionSource = new();
+
         #endregion
 
 
@@ -71,7 +74,7 @@ namespace MobX.Serialization
             var provider = ArrayUtility.Cast<EncryptionProviderAsset, IEncryptionProvider>(args.encryptionProvider);
 
             var fileOperations = args.fileStorageProvider.ValueOrDefault() as IFileOperations ??
-                new MonoFileOperations();
+                                 new MonoFileOperations();
 
             var fileStorageArguments = new FileStorageArguments(
                 RootFolder,
@@ -131,7 +134,10 @@ namespace MobX.Serialization
                 var sharedProfileData = await Storage.LoadAsync<Profile>(sharedProfilePath);
                 sharedProfile = sharedProfileData.IsValid ? sharedProfileData.Read() : CreateSharedProfile();
 
-                static Profile CreateSharedProfile() => new(SharedProfileName, SharedProfileFolder, SharedProfileHeader);
+                static Profile CreateSharedProfile()
+                {
+                    return new Profile(SharedProfileName, SharedProfileFolder, SharedProfileHeader);
+                }
 
                 await sharedProfile.LoadAsync();
 
@@ -179,6 +185,7 @@ namespace MobX.Serialization
 
                 sharedProfile.Save();
 
+                initializationTaskCompletionSource.TrySetResult(null);
                 Debug.Log(Log, "Initialization Completed");
             }
             catch (Exception exception)
@@ -272,6 +279,7 @@ namespace MobX.Serialization
 
                 sharedProfile.Save();
 
+                initializationTaskCompletionSource.TrySetResult(null);
                 Debug.Log(Log, "Initialization Completed");
             }
             catch (Exception exception)
@@ -320,7 +328,8 @@ namespace MobX.Serialization
             activeProfile = null;
             version = string.Empty;
             fileSystemData = default(FileSystemData);
-
+            initializationTaskCompletionSource.TrySetCanceled();
+            initializationTaskCompletionSource = new TaskCompletionSource<object>();
             State = FileSystemState.Uninitialized;
             Debug.Log(Log, "Shutdown Completed");
             ShutdownCompleted?.Invoke();
@@ -357,6 +366,8 @@ namespace MobX.Serialization
             activeProfile = null;
             version = string.Empty;
             fileSystemData = default(FileSystemData);
+            initializationTaskCompletionSource.TrySetCanceled();
+            initializationTaskCompletionSource = new TaskCompletionSource<object>();
             State = FileSystemState.Uninitialized;
             Debug.Log(Log, "Shutdown Completed");
             ShutdownCompleted?.Invoke();
@@ -500,7 +511,7 @@ namespace MobX.Serialization
             {
                 return false;
             }
-            if (activeProfile is { IsLoaded: true })
+            if (activeProfile is {IsLoaded: true})
             {
                 activeProfile.Unload();
             }
@@ -528,7 +539,7 @@ namespace MobX.Serialization
             {
                 return false;
             }
-            if (activeProfile is { IsLoaded: true })
+            if (activeProfile is {IsLoaded: true})
             {
                 activeProfile.Unload();
             }
