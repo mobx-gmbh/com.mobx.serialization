@@ -1,4 +1,4 @@
-﻿using MobX.Utilities.Inspector;
+﻿using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace MobX.Serialization

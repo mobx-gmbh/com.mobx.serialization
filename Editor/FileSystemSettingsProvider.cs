@@ -1,10 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
-using MobX.Serialization.Editor;
 using MobX.Utilities.Editor.Inspector;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MobX.Serialization
+namespace MobX.Serialization.Editor
 {
     public class FileSystemSettingsProvider : UnityEditor.SettingsProvider
     {

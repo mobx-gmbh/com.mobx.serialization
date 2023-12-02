@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
-using MobX.Utilities.Inspector;
+using MobX.Inspector;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace MobX.Serialization
@@ -10,12 +11,12 @@ namespace MobX.Serialization
         [SerializeField] private FileSystemArgs args;
         public FileSystemArgs Args => args;
 
-        [ReadonlyInspector]
+        [ReadOnly]
         [Foldout("Controls")]
         private FileSystemState State => FileSystem.State;
 
         [Button]
-        [SpaceBefore]
+        [PropertySpace]
         [Foldout("Controls")]
         public UniTask Initialize()
         {
@@ -30,7 +31,7 @@ namespace MobX.Serialization
         }
 
         [Button]
-        [SpaceBefore]
+        [PropertySpace]
         [Foldout("Controls")]
         public void OpenDataPath()
         {

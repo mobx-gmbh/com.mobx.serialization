@@ -36,7 +36,7 @@ namespace MobX.Serialization
 
         private const string SharedProfileName = "Shared";
         private const string SharedProfileFolder = "_shared";
-        private const string SharedProfileHeader = "_shared.sav";
+        private const string SharedProfileFileName = "_shared.sav";
         private const string ProfilePathsKey = "profiles.sav";
 
         private static string defaultProfileName;
@@ -130,13 +130,13 @@ namespace MobX.Serialization
                 Storage = CreateFileStorage(args);
                 defaultProfileName = args.defaultProfileName;
 
-                var sharedProfilePath = Path.Combine(SharedProfileFolder, SharedProfileHeader);
+                var sharedProfilePath = Path.Combine(SharedProfileFolder, SharedProfileFileName);
                 var sharedProfileData = await Storage.LoadAsync<Profile>(sharedProfilePath);
                 sharedProfile = sharedProfileData.IsValid ? sharedProfileData.Read() : CreateSharedProfile();
 
                 static Profile CreateSharedProfile()
                 {
-                    return new Profile(SharedProfileName, SharedProfileFolder, SharedProfileHeader);
+                    return new Profile(SharedProfileName, SharedProfileFolder, SharedProfileFileName);
                 }
 
                 await sharedProfile.LoadAsync();
@@ -225,11 +225,11 @@ namespace MobX.Serialization
                 Storage = CreateFileStorage(args);
                 defaultProfileName = args.defaultProfileName;
 
-                var sharedProfilePath = Path.Combine(SharedProfileFolder, SharedProfileHeader);
+                var sharedProfilePath = Path.Combine(SharedProfileFolder, SharedProfileFileName);
                 var sharedProfileData = Storage.Load<Profile>(sharedProfilePath);
                 sharedProfile = sharedProfileData.IsValid
                     ? sharedProfileData.Read()
-                    : new Profile(SharedProfileName, SharedProfileFolder, SharedProfileHeader);
+                    : new Profile(SharedProfileName, SharedProfileFolder, SharedProfileFileName);
 
                 sharedProfile.Load();
 
