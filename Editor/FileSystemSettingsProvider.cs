@@ -120,7 +120,7 @@ namespace MobX.Serialization.Editor
         [UnityEditor.SettingsProviderAttribute]
         public static UnityEditor.SettingsProvider CreateSettingsProvider()
         {
-            return new FileSystemSettingsProvider("Project/File System", UnityEditor.SettingsScope.Project);
+            return new FileSystemSettingsProvider("Project/MobX/File System", UnityEditor.SettingsScope.Project);
         }
     }
 }
