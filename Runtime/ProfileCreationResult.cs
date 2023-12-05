@@ -2,12 +2,12 @@
 {
     public readonly struct ProfileCreationResult
     {
-        public readonly IProfile Profile;
+        public readonly ISaveProfile Profile;
         public readonly ProfileCreationStatus Status;
 
         public bool Success => Status == ProfileCreationStatus.Success;
 
-        public ProfileCreationResult(IProfile profile, ProfileCreationStatus status)
+        public ProfileCreationResult(ISaveProfile profile, ProfileCreationStatus status)
         {
             Profile = profile;
             Status = status;

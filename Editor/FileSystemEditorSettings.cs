@@ -24,19 +24,16 @@ namespace MobX.Serialization.Editor
         ShutdownOnExitPlayMode = 2
     }
 
-    [UnityEditor.FilePathAttribute("ProjectSettings/FileSystemEditorSettings.asset", UnityEditor.FilePathAttribute.Location.ProjectFolder)]
+    [UnityEditor.FilePathAttribute("ProjectSettings/FileSystemEditorSettings.asset",
+        UnityEditor.FilePathAttribute.Location.ProjectFolder)]
     [UnityEditor.InitializeOnLoadAttribute]
     public class FileSystemEditorSettings : UnityEditor.ScriptableSingleton<FileSystemEditorSettings>
     {
         [SerializeField] private InitializeFlags initialization;
         [SerializeField] private ShutdownFlags shutdown;
         [SerializeField] private FileSystemArgumentsAsset fileSystemArguments;
-        [SerializeField] private FileSystemShutdownArgumentsAsset fileSystemShutdownArguments;
 
-        public FileSystemArgs Args => fileSystemArguments ? fileSystemArguments.Args : default(FileSystemArgs);
-        public FileSystemShutdownArgs ShutdownArgs => fileSystemShutdownArguments
-            ? fileSystemShutdownArguments.Args
-            : default(FileSystemShutdownArgs);
+        public IFileSystemArgs Args => fileSystemArguments ? fileSystemArguments : default(FileSystemArgs);
 
         internal InitializeFlags InitializationFlags
         {
@@ -54,12 +51,6 @@ namespace MobX.Serialization.Editor
         {
             get => fileSystemArguments;
             set => fileSystemArguments = value;
-        }
-
-        public FileSystemShutdownArgumentsAsset FileSystemShutdownArguments
-        {
-            get => fileSystemShutdownArguments;
-            set => fileSystemShutdownArguments = value;
         }
 
         public void SaveSettings()
@@ -80,7 +71,7 @@ namespace MobX.Serialization.Editor
             var isUninitialized = FileSystem.State is FileSystemState.Uninitialized;
             if (isUninitialized && instance.initialization.HasFlagUnsafe(InitializeFlags.AfterAssembliesLoaded))
             {
-                FileSystem.Shutdown(instance.ShutdownArgs);
+                FileSystem.Shutdown();
                 FileSystem.Initialize(instance.Args);
             }
         }
@@ -91,7 +82,12 @@ namespace MobX.Serialization.Editor
             var isUninitialized = FileSystem.State is FileSystemState.Uninitialized;
             if (isUninitialized && instance.initialization.HasFlagUnsafe(InitializeFlags.BeforeSceneLoad))
             {
-                FileSystem.Shutdown(instance.ShutdownArgs);
+                var shutdownArgs = new FileSystemShutdownArgs
+                {
+                    forceSynchronousShutdown = instance.Args.ForceSynchronousShutdown
+                };
+
+                FileSystem.Shutdown(shutdownArgs);
                 FileSystem.Initialize(instance.Args);
             }
         }
@@ -102,7 +98,12 @@ namespace MobX.Serialization.Editor
             var isUninitialized = FileSystem.State is FileSystemState.Uninitialized;
             if (isUninitialized && instance.initialization.HasFlagUnsafe(InitializeFlags.AfterSceneLoad))
             {
-                FileSystem.Shutdown(instance.ShutdownArgs);
+                var shutdownArgs = new FileSystemShutdownArgs
+                {
+                    forceSynchronousShutdown = instance.Args.ForceSynchronousShutdown
+                };
+
+                FileSystem.Shutdown(shutdownArgs);
                 FileSystem.Initialize(instance.Args);
             }
         }
@@ -113,7 +114,8 @@ namespace MobX.Serialization.Editor
             switch (state)
             {
                 case UnityEditor.PlayModeStateChange.EnteredEditMode:
-                    if (isUninitialized && instance.initialization.HasFlagUnsafe(InitializeFlags.InitializeOnEnterEditMode))
+                    if (isUninitialized &&
+                        instance.initialization.HasFlagUnsafe(InitializeFlags.InitializeOnEnterEditMode))
                     {
                         FileSystem.Initialize(instance.Args);
                     }
@@ -121,11 +123,17 @@ namespace MobX.Serialization.Editor
                 case UnityEditor.PlayModeStateChange.ExitingEditMode:
                     if (instance.shutdown.HasFlagUnsafe(ShutdownFlags.ShutdownOnExitEditMode))
                     {
-                        FileSystem.Shutdown(instance.ShutdownArgs);
+                        var shutdownArgs = new FileSystemShutdownArgs
+                        {
+                            forceSynchronousShutdown = instance.Args.ForceSynchronousShutdown
+                        };
+
+                        FileSystem.Shutdown(shutdownArgs);
                     }
                     break;
                 case UnityEditor.PlayModeStateChange.EnteredPlayMode:
-                    if (isUninitialized && instance.initialization.HasFlagUnsafe(InitializeFlags.InitializeOnEnterPlayMode))
+                    if (isUninitialized &&
+                        instance.initialization.HasFlagUnsafe(InitializeFlags.InitializeOnEnterPlayMode))
                     {
                         FileSystem.Initialize(instance.Args);
                     }
@@ -133,7 +141,12 @@ namespace MobX.Serialization.Editor
                 case UnityEditor.PlayModeStateChange.ExitingPlayMode:
                     if (instance.shutdown.HasFlagUnsafe(ShutdownFlags.ShutdownOnExitPlayMode))
                     {
-                        FileSystem.Shutdown(instance.ShutdownArgs);
+                        var shutdownArgs = new FileSystemShutdownArgs
+                        {
+                            forceSynchronousShutdown = instance.Args.ForceSynchronousShutdown
+                        };
+
+                        FileSystem.Shutdown(shutdownArgs);
                     }
                     break;
                 default:

@@ -13,11 +13,6 @@ namespace MobX.Serialization
     {
         #region Fields
 
-        public string DisplayName => profileDisplayName;
-        public string FolderName => profileFolderName;
-        public bool IsLoaded { get; private set; }
-        public string ProfileFilePath => Path.Combine(profileFolderName, profileFileName);
-
         [SerializeField] private string profileDisplayName;
         [SerializeField] private string profileFolderName;
         [SerializeField] private string profileFileName;
@@ -25,16 +20,28 @@ namespace MobX.Serialization
 
         [SerializeField] private List<Header> files;
 
-        private Dictionary<string, SaveData> _loadedSaveDataCache = new();
-        private Dictionary<string, FileData> _loadedFileDataCache = new();
-        private HashSet<string> _dirtySaveDataKeys = new();
+        private Dictionary<string, SaveData> _loadedSaveDataCache;
+        private Dictionary<string, FileData> _loadedFileDataCache;
+        private HashSet<string> _dirtySaveDataKeys;
 
         private bool _isDirty;
 
         #endregion
 
 
-        #region API
+        #region Properties
+
+        public string DisplayName => profileDisplayName;
+        public string FolderName => profileFolderName;
+        public DateTime CreatedTimeStamp => DateTime.Parse(createdTimeStamp);
+        public bool IsLoaded { get; private set; }
+        public string ProfileFilePath => Path.Combine(profileFolderName, profileFileName);
+        public SaveProfileData Info => new(DisplayName, FolderName, CreatedTimeStamp, ProfileFilePath, files);
+
+        #endregion
+
+
+        #region Save & Store File
 
         public void SaveFile<T>(string fileName, T value, StoreOptions options = default)
         {
@@ -136,6 +143,11 @@ namespace MobX.Serialization
             }
         }
 
+        #endregion
+
+
+        #region Load File
+
         public T LoadFile<T>(string fileName, StoreOptions options = default)
         {
             FileSystem.Validator.ValidateFileName(ref fileName);
@@ -158,33 +170,76 @@ namespace MobX.Serialization
             return default(T);
         }
 
-        public void ResolveFile<T>(string fileName, ref T value, StoreOptions options = default)
+        public bool TryLoadFile<T>(string fileName, out T value, StoreOptions options = default)
         {
             FileSystem.Validator.ValidateFileName(ref fileName);
 
             if (_loadedFileDataCache.TryGetValue(fileName, out var data))
             {
                 var saveData = data.Read<SaveData<T>>();
-                _loadedSaveDataCache.Add(fileName, saveData);
-                _loadedFileDataCache.Remove(fileName);
-                value = saveData.data;
-                return;
+                if (saveData is not null)
+                {
+                    _loadedSaveDataCache.Add(fileName, saveData);
+                    _loadedFileDataCache.Remove(fileName);
+                    value = saveData.data;
+                    return true;
+                }
             }
 
             if (_loadedSaveDataCache.TryGetValue(fileName, out var file))
             {
-                value = file is SaveData<T> save ? save.data : default(T);
-                return;
+                if (file is SaveData<T> save)
+                {
+                    value = save.data;
+                    return true;
+                }
             }
 
-            value = Activator.CreateInstance<T>();
-            SaveFile(fileName, value);
+            value = default(T);
+            return false;
         }
 
-        public void DeleteFile<T>(string fileName)
+        #endregion
+
+
+        #region Has & Delete File
+
+        public bool HasFile(string fileName)
         {
             FileSystem.Validator.ValidateFileName(ref fileName);
+            foreach (var header in files)
+            {
+                if (header.fileName == fileName)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
+
+        public void DeleteFile(string fileName)
+        {
+            FileSystem.Validator.ValidateFileName(ref fileName);
+            _loadedSaveDataCache.Remove(fileName);
+            _loadedFileDataCache.Remove(fileName);
+            for (var index = files.Count - 1; index >= 0; index--)
+            {
+                if (files[index].fileName == fileName)
+                {
+                    files.RemoveAt(index);
+                    _isDirty = true;
+                    break;
+                }
+            }
+            FileSystem.Storage.Delete(fileName);
+            Save();
+        }
+
+        #endregion
+
+
+        #region Profile Save, Load & Unload
 
         public void Save()
         {
@@ -227,8 +282,40 @@ namespace MobX.Serialization
             IsLoaded = true;
         }
 
+        public void Load()
+        {
+            if (IsLoaded)
+            {
+                return;
+            }
+            foreach (var header in files)
+            {
+                var filePath = Path.Combine(profileFolderName, header.fileName);
+                var type = Type.GetType(header.qualifiedTypeName);
+                if (type != null && type.GetGenericTypeDefinition() == typeof(SaveData<>))
+                {
+                    var typedFileData = FileSystem.Storage.Load(filePath, type);
+                    _loadedSaveDataCache.Add(header.fileName, (SaveData) typedFileData.Read());
+                }
+                else
+                {
+                    var fileData = FileSystem.Storage.Load(filePath);
+                    _loadedFileDataCache.Add(header.fileName, fileData);
+                }
+            }
+            IsLoaded = true;
+        }
+
         public void Unload()
         {
+            _loadedSaveDataCache.Clear();
+            _loadedFileDataCache.Clear();
+            _dirtySaveDataKeys.Clear();
+        }
+
+        public void Reset()
+        {
+            files.Clear();
             _loadedSaveDataCache.Clear();
             _loadedFileDataCache.Clear();
             _dirtySaveDataKeys.Clear();
@@ -239,12 +326,20 @@ namespace MobX.Serialization
 
         #region Constructor
 
-        public SaveProfile(string displayName, string folderName, string fileName)
+        public SaveProfile(string displayName, string folderName, string fileName) : this()
         {
             profileDisplayName = displayName;
             profileFolderName = folderName;
             profileFileName = fileName;
             createdTimeStamp = DateTime.Now.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private SaveProfile()
+        {
+            _loadedSaveDataCache = new Dictionary<string, SaveData>();
+            _loadedFileDataCache = new Dictionary<string, FileData>();
+            _dirtySaveDataKeys = new HashSet<string>();
+            files = new List<Header>();
         }
 
         #endregion

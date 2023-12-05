@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using MobX.Utilities;
-using MobX.Utilities.Collections;
 using MobX.Utilities.Pooling;
 using System;
 using System.Collections;
@@ -21,13 +20,13 @@ namespace MobX.Serialization
         internal static IFileStorage Storage { get; private set; }
         internal static readonly LogCategory Log = "File System";
 
-        private static Profile activeProfile;
-        private static Profile sharedProfile;
+        private static SaveProfile activeProfile;
+        private static SaveProfile sharedProfile;
 
         private static FileValidator validator;
 
         private static ProfilePathData profilePathData;
-        private static Dictionary<string, IProfile> profileCache;
+        private static Dictionary<string, ISaveProfile> profileCache;
 
         private const string DefaultEncryptionKey = "QplEVJveOQ";
 
@@ -54,35 +53,32 @@ namespace MobX.Serialization
 
         #region Platform Storage Provider
 
-        private static IFileStorage CreateFileStorage(in FileSystemArgs args)
+        private static IFileStorage CreateFileStorage(IFileSystemArgs args)
         {
             Debug.Log("File System", "Creating File Storage");
             var rootFolderBuilder = StringBuilderPool.Get();
-            rootFolderBuilder.Append(args.rootFolder.IsNotNullOrWhitespace() ? args.rootFolder : string.Empty);
-            if (args.versionRootFolder)
+            rootFolderBuilder.Append(args.RootFolder.IsNotNullOrWhitespace() ? args.RootFolder : string.Empty);
+            if (args.AppendVersionToRootFolder)
             {
                 rootFolderBuilder.Append('_');
-                rootFolderBuilder.Append(args.useUnityVersion ? Application.version : args.version);
+                rootFolderBuilder.Append(args.UseUnityVersion ? Application.version : args.Version);
             }
             RootFolder = StringBuilderPool.BuildAndRelease(rootFolderBuilder);
 
-            var encryptionProvider = args.EncryptionProvider ?? args.encryptionAsset.ValueOrDefault();
-            var encryptionKey = args.encryptionKey.TryGetValue(out var key) && key.IsNotNullOrWhitespace()
+            var encryptionProvider = args.EncryptionAsset.ValueOrDefault();
+            var encryptionKey = args.EncryptionKey.TryGetValue(out var key) && key.IsNotNullOrWhitespace()
                 ? key
                 : DefaultEncryptionKey;
 
-            var provider = ArrayUtility.Cast<EncryptionProviderAsset, IEncryptionProvider>(args.encryptionProvider);
-
-            var fileOperations = args.fileStorageProvider.ValueOrDefault() as IFileOperations ??
+            var fileOperations = args.FileStorageProvider.ValueOrDefault() as IFileOperations ??
                                  new MonoFileOperations();
 
             var fileStorageArguments = new FileStorageArguments(
                 RootFolder,
                 encryptionKey,
                 encryptionProvider,
-                args.exceptions,
-                provider,
-                args.forceSynchronous,
+                args.LoggingLevel,
+                args.ForceSynchronous,
                 fileOperations
             );
 
@@ -98,7 +94,7 @@ namespace MobX.Serialization
 
         #region Initialization
 
-        private static async UniTask InitializeAsyncInternal(FileSystemArgs args)
+        private static async UniTask InitializeAsyncInternal(IFileSystemArgs args)
         {
             try
             {
@@ -106,7 +102,7 @@ namespace MobX.Serialization
                 {
                     return;
                 }
-                if (args.forceSynchronous)
+                if (args.ForceSynchronous)
                 {
                     InitializeInternal(args);
                     return;
@@ -124,39 +120,40 @@ namespace MobX.Serialization
                     Debug.LogException(exception);
                 }
 
-                profileLimit = args.profileLimit.ValueOrDefault() > 0 ? args.profileLimit : uint.MaxValue;
-                version = args.useUnityVersion ? Application.version : args.version ?? string.Empty;
+                profileLimit = args.ProfileLimit.ValueOrDefault() > 0 ? args.ProfileLimit : uint.MaxValue;
+                version = args.UseUnityVersion ? Application.version : args.Version ?? string.Empty;
                 validator = new FileValidator(args);
                 Storage = CreateFileStorage(args);
-                defaultProfileName = args.defaultProfileName;
+                defaultProfileName = args.DefaultProfileName;
 
                 var sharedProfilePath = Path.Combine(SharedProfileFolder, SharedProfileFileName);
-                var sharedProfileData = await Storage.LoadAsync<Profile>(sharedProfilePath);
+                var sharedProfileData = await Storage.LoadAsync<SaveProfile>(sharedProfilePath);
                 sharedProfile = sharedProfileData.IsValid ? sharedProfileData.Read() : CreateSharedProfile();
 
-                static Profile CreateSharedProfile()
+                static SaveProfile CreateSharedProfile()
                 {
-                    return new Profile(SharedProfileName, SharedProfileFolder, SharedProfileFileName);
+                    return new SaveProfile(SharedProfileName, SharedProfileFolder, SharedProfileFileName);
                 }
 
                 await sharedProfile.LoadAsync();
 
-                var activeProfilePath = sharedProfile.TryGetData(FileSystemDataSave, out fileSystemData)
+                var activeProfilePath = sharedProfile.TryLoadFile(FileSystemDataSave, out fileSystemData)
                     ? fileSystemData.activeProfileFilePath
                     : string.Empty;
 
-                sharedProfile.ResolveFile(ProfilePathsKey, out profilePathData);
+                sharedProfile.TryLoadFile(ProfilePathsKey, out profilePathData);
+                profilePathData ??= new ProfilePathData();
                 var profilePaths = profilePathData.Paths;
-                var profileData = await Storage.LoadAsync<Profile>(activeProfilePath);
+                var profileData = await Storage.LoadAsync<SaveProfile>(activeProfilePath);
                 var profile = profileData.IsValid ? profileData.Read() : CreateDefaultProfile(profilePaths);
 
-                static Profile CreateDefaultProfile(ICollection paths)
+                static SaveProfile CreateDefaultProfile(ICollection paths)
                 {
                     var folderName = $"{defaultProfileName}{paths.Count.ToString()}";
-                    return new Profile(folderName, folderName, ProfileHeader);
+                    return new SaveProfile(folderName, folderName, ProfileHeader);
                 }
 
-                profileCache = new Dictionary<string, IProfile>(profilePaths.Count);
+                profileCache = new Dictionary<string, ISaveProfile>(profilePaths.Count);
                 foreach (var profilePath in profilePaths)
                 {
                     if (profileCache.ContainsKey(profilePath))
@@ -164,7 +161,7 @@ namespace MobX.Serialization
                         continue;
                     }
 
-                    var fileData = await Storage.LoadAsync<Profile>(profilePath);
+                    var fileData = await Storage.LoadAsync<SaveProfile>(profilePath);
                     if (fileData.IsValid)
                     {
                         profileCache.AddUnique(profilePath, fileData.Read());
@@ -175,7 +172,7 @@ namespace MobX.Serialization
 
                 State = FileSystemState.Initialized;
 
-                var converter = args.saveGameConverter.ValueOrDefault();
+                var converter = args.SaveGameConverter.ValueOrDefault();
                 if (converter != null)
                 {
                     var topLevelStorageProvider = CreateFileStorage(converter.FileSystemArgs);
@@ -198,10 +195,11 @@ namespace MobX.Serialization
             InitializationCompleted?.Invoke();
         }
 
-        private static void InitializeInternal(in FileSystemArgs args = new())
+        private static void InitializeInternal(IFileSystemArgs args = null)
         {
             try
             {
+                args ??= new FileSystemArgs();
                 if (State != FileSystemState.Uninitialized)
                 {
                     return;
@@ -219,44 +217,47 @@ namespace MobX.Serialization
                     Debug.LogException(exception);
                 }
 
-                profileLimit = args.profileLimit.ValueOrDefault() > 0 ? args.profileLimit : uint.MaxValue;
-                version = args.useUnityVersion ? Application.version : args.version ?? string.Empty;
+                profileLimit = args.ProfileLimit.ValueOrDefault() > 0 ? args.ProfileLimit : uint.MaxValue;
+                version = args.UseUnityVersion ? Application.version : args.Version ?? string.Empty;
                 validator = new FileValidator(args);
                 Storage = CreateFileStorage(args);
-                defaultProfileName = args.defaultProfileName;
+                defaultProfileName = args.DefaultProfileName;
 
                 var sharedProfilePath = Path.Combine(SharedProfileFolder, SharedProfileFileName);
-                var sharedProfileData = Storage.Load<Profile>(sharedProfilePath);
+                var sharedProfileData = Storage.Load<SaveProfile>(sharedProfilePath);
                 sharedProfile = sharedProfileData.IsValid
                     ? sharedProfileData.Read()
-                    : new Profile(SharedProfileName, SharedProfileFolder, SharedProfileFileName);
+                    : new SaveProfile(SharedProfileName, SharedProfileFolder, SharedProfileFileName);
 
                 sharedProfile.Load();
 
-                var activeProfilePath = sharedProfile.TryGetData(FileSystemDataSave, out fileSystemData)
+                var activeProfilePath = sharedProfile.TryLoadFile(FileSystemDataSave, out fileSystemData)
                     ? fileSystemData.activeProfileFilePath
                     : string.Empty;
 
-                sharedProfile.ResolveFile(ProfilePathsKey, out profilePathData);
+                if (!sharedProfile.TryLoadFile(ProfilePathsKey, out profilePathData))
+                {
+                    profilePathData = new ProfilePathData();
+                }
                 var profilePaths = profilePathData.Paths;
 
-                var profileData = Storage.Load<Profile>(activeProfilePath);
+                var profileData = Storage.Load<SaveProfile>(activeProfilePath);
                 var profile = profileData.IsValid ? profileData.Read() : CreateDefaultProfile(profilePaths);
 
-                static Profile CreateDefaultProfile(ICollection paths)
+                static SaveProfile CreateDefaultProfile(ICollection paths)
                 {
                     var folderName = $"{defaultProfileName}{paths.Count.ToString()}";
-                    return new Profile(folderName, folderName, ProfileHeader);
+                    return new SaveProfile(folderName, folderName, ProfileHeader);
                 }
 
-                profileCache = new Dictionary<string, IProfile>(profilePaths.Count);
+                profileCache = new Dictionary<string, ISaveProfile>(profilePaths.Count);
                 foreach (var profilePath in profilePaths)
                 {
                     if (profileCache.ContainsKey(profilePath))
                     {
                         continue;
                     }
-                    var fileData = Storage.Load<Profile>(profilePath);
+                    var fileData = Storage.Load<SaveProfile>(profilePath);
                     if (fileData.IsValid)
                     {
                         profileCache.AddUnique(profilePath, fileData.Read());
@@ -267,11 +268,11 @@ namespace MobX.Serialization
 
                 State = FileSystemState.Initialized;
 
-                var converter = args.saveGameConverter.ValueOrDefault();
+                var converter = args.SaveGameConverter.ValueOrDefault();
                 if (converter != null)
                 {
                     var converterArgs = converter.FileSystemArgs;
-                    converterArgs.forceSynchronous = true;
+                    converterArgs.ForceSynchronous = true;
                     var topLevelStorageProvider = CreateFileStorage(converterArgs);
                     converter.Convert(topLevelStorageProvider, profile, sharedProfile);
                     profile.Save();
@@ -402,7 +403,7 @@ namespace MobX.Serialization
             string CreateFallbackName()
             {
                 var result = defaultProfileName + ++fileSystemData.nextProfileIndex;
-                sharedProfile.StoreData(FileSystemDataSave, fileSystemData);
+                sharedProfile.StoreFile(FileSystemDataSave, fileSystemData);
                 return result;
             }
 
@@ -422,9 +423,9 @@ namespace MobX.Serialization
                 return ProfileCreationResult.NameNotAvailable;
             }
 
-            var profile = new Profile(profileName, fileSystemName, ProfileHeader);
+            var profile = new SaveProfile(profileName, fileSystemName, ProfileHeader);
 
-            profilePathData.Paths.AddUnique(profile.HeaderFilePath);
+            profilePathData.Paths.AddUnique(profile.Info.ProfileDataPath);
 
             if (args.activate)
             {
@@ -461,8 +462,7 @@ namespace MobX.Serialization
             string CreateFallbackName()
             {
                 var result = defaultProfileName + ++fileSystemData.nextProfileIndex;
-                sharedProfile.StoreData(FileSystemDataSave, fileSystemData);
-                sharedProfile.Save();
+                sharedProfile.SaveFile(FileSystemDataSave, fileSystemData);
                 return result;
             }
 
@@ -482,9 +482,9 @@ namespace MobX.Serialization
                 return ProfileCreationResult.NameNotAvailable;
             }
 
-            var profile = new Profile(profileName, fileSystemName, ProfileHeader);
+            var profile = new SaveProfile(profileName, fileSystemName, ProfileHeader);
 
-            profilePathData.Paths.AddUnique(profile.HeaderFilePath);
+            profilePathData.Paths.AddUnique(profile.Info.ProfileDataPath);
 
             if (args.activate)
             {
@@ -501,7 +501,7 @@ namespace MobX.Serialization
 
         #region Profile Switching
 
-        private static async UniTask<bool> UpdateActiveProfileAsyncInternal(Profile profile)
+        private static async UniTask<bool> UpdateActiveProfileAsyncInternal(SaveProfile profile)
         {
             if (profile == null)
             {
@@ -518,9 +518,9 @@ namespace MobX.Serialization
             Debug.Log(Log, $"Switch active profile from: {activeProfile.ToNullString()} to {profile}");
             activeProfile = profile;
             await activeProfile.LoadAsync();
-            profileCache.AddOrUpdate(activeProfile.HeaderFilePath, activeProfile);
-            fileSystemData.activeProfileFilePath = profile.HeaderFilePath;
-            sharedProfile.StoreData(FileSystemDataSave, fileSystemData);
+            profileCache.AddOrUpdate(activeProfile.Info.ProfileDataPath, activeProfile);
+            fileSystemData.activeProfileFilePath = profile.Info.ProfileDataPath;
+            sharedProfile.StoreFile(FileSystemDataSave, fileSystemData);
             if (IsInitialized)
             {
                 ProfileChanged?.Invoke(activeProfile);
@@ -529,7 +529,7 @@ namespace MobX.Serialization
             return true;
         }
 
-        private static bool UpdateActiveProfileInternal(Profile profile)
+        private static bool UpdateActiveProfileInternal(SaveProfile profile)
         {
             if (profile == null)
             {
@@ -546,9 +546,9 @@ namespace MobX.Serialization
             Debug.Log(Log, $"Switch active profile from: {activeProfile.ToNullString()} to {profile}");
             activeProfile = profile;
             activeProfile.Load();
-            profileCache.AddOrUpdate(activeProfile.HeaderFilePath, activeProfile);
-            fileSystemData.activeProfileFilePath = profile.HeaderFilePath;
-            sharedProfile.StoreData(FileSystemDataSave, fileSystemData);
+            profileCache.AddOrUpdate(activeProfile.Info.ProfileDataPath, activeProfile);
+            fileSystemData.activeProfileFilePath = profile.Info.ProfileDataPath;
+            sharedProfile.StoreFile(FileSystemDataSave, fileSystemData);
             if (IsInitialized)
             {
                 ProfileChanged?.Invoke(activeProfile);
@@ -562,7 +562,7 @@ namespace MobX.Serialization
 
         #region Profile Deletion (Profile)
 
-        private static async UniTask DeleteProfileAsyncInternal(Profile profile)
+        private static async UniTask DeleteProfileAsyncInternal(SaveProfile profile)
         {
             if (profile == null)
             {
@@ -575,31 +575,31 @@ namespace MobX.Serialization
 
             ProfileDeleted?.Invoke(profile);
 
-            profileCache.Remove(profile.HeaderFilePath);
-            profilePathData.Paths.Remove(profile.HeaderFilePath);
+            profileCache.Remove(profile.Info.ProfileDataPath);
+            profilePathData.Paths.Remove(profile.Info.ProfileDataPath);
 
             if (profile.IsLoaded)
             {
                 profile.Unload();
             }
 
-            foreach (var header in profile.FileHeaders)
+            foreach (var header in profile.Info.FileHeaders)
             {
-                var filePath = Path.Combine(profile.FolderName, header.FileName);
+                var filePath = Path.Combine(profile.FolderName, header.fileName);
                 await Storage.DeleteAsync(filePath);
             }
 
-            await Storage.DeleteAsync(profile.HeaderFilePath);
+            await Storage.DeleteAsync(profile.Info.ProfileDataPath);
             await Storage.DeleteFolderAsync(profile.FolderName);
         }
 
         private static async UniTask DeleteProfileAsyncInternal(string profileName)
         {
             var profile = GetProfileByName(profileName);
-            await DeleteProfileAsyncInternal(profile as Profile);
+            await DeleteProfileAsyncInternal(profile as SaveProfile);
         }
 
-        private static void DeleteProfileInternal(Profile profile)
+        private static void DeleteProfileInternal(SaveProfile profile)
         {
             if (profile == null)
             {
@@ -612,35 +612,36 @@ namespace MobX.Serialization
 
             ProfileDeleted?.Invoke(profile);
 
-            profileCache.Remove(profile.HeaderFilePath);
-            profilePathData.Paths.Remove(profile.HeaderFilePath);
+            profileCache.Remove(profile.Info.ProfileDataPath);
+            profilePathData.Paths.Remove(profile.Info.ProfileDataPath);
 
             if (profile.IsLoaded)
             {
                 profile.Unload();
             }
 
-            foreach (var header in profile.FileHeaders)
+            var profileInfo = profile.Info;
+            foreach (var header in profileInfo.FileHeaders)
             {
-                var filePath = Path.Combine(profile.FolderName, header.FileName);
+                var filePath = Path.Combine(profile.FolderName, header.fileName);
                 Storage.Delete(filePath);
             }
 
-            Storage.Delete(profile.HeaderFilePath);
+            Storage.Delete(profileInfo.ProfileDataPath);
             Storage.DeleteFolder(profile.FolderName);
         }
 
         private static void DeleteProfileInternal(string profileName)
         {
             var profile = GetProfileByName(profileName);
-            DeleteProfileInternal(profile as Profile);
+            DeleteProfileInternal(profile as SaveProfile);
         }
 
-        private static IProfile GetProfileByName(string profileName)
+        private static ISaveProfile GetProfileByName(string profileName)
         {
             foreach (var profile in Profiles)
             {
-                if (profile.DisplayName != profileName)
+                if (profile.Info.DisplayName != profileName)
                 {
                     continue;
                 }
@@ -654,7 +655,7 @@ namespace MobX.Serialization
 
         #region Reset Profile
 
-        private static async UniTask ResetProfileAsyncInternal(Profile profile)
+        private static async UniTask ResetProfileAsyncInternal(SaveProfile profile)
         {
             if (profile == null)
             {
@@ -666,13 +667,13 @@ namespace MobX.Serialization
                 profile.Unload();
             }
 
-            foreach (var header in profile.FileHeaders)
+            foreach (var header in profile.Info.FileHeaders)
             {
-                var filePath = Path.Combine(profile.FolderName, header.FileName);
+                var filePath = Path.Combine(profile.FolderName, header.fileName);
                 await Storage.DeleteAsync(filePath);
             }
 
-            profile.ResetProfile();
+            profile.Reset();
             profile.Save();
 
             ProfileReset?.Invoke(profile);
@@ -681,10 +682,10 @@ namespace MobX.Serialization
         private static async UniTask ResetProfileAsyncInternal(string profileName)
         {
             var profile = GetProfileByName(profileName);
-            await ResetProfileAsyncInternal(profile as Profile);
+            await ResetProfileAsyncInternal(profile as SaveProfile);
         }
 
-        private static void ResetProfileInternal(Profile profile)
+        private static void ResetProfileInternal(SaveProfile profile)
         {
             if (profile == null)
             {
@@ -696,13 +697,13 @@ namespace MobX.Serialization
                 profile.Unload();
             }
 
-            foreach (var header in profile.FileHeaders)
+            foreach (var header in profile.Info.FileHeaders)
             {
-                var filePath = Path.Combine(profile.FolderName, header.FileName);
+                var filePath = Path.Combine(profile.FolderName, header.fileName);
                 Storage.Delete(filePath);
             }
 
-            profile.ResetProfile();
+            profile.Reset();
             profile.Save();
 
             ProfileReset?.Invoke(profile);
@@ -711,7 +712,7 @@ namespace MobX.Serialization
         private static void ResetProfileInternal(string profileName)
         {
             var profile = GetProfileByName(profileName);
-            ResetProfileInternal(profile as Profile);
+            ResetProfileInternal(profile as SaveProfile);
         }
 
         #endregion
@@ -720,17 +721,10 @@ namespace MobX.Serialization
         #region Profile Backup
 
 #pragma warning disable CS1998
-        private static async UniTask<ProfileBackup> BackupProfileInternalAsync(IProfile profile)
+        private static async UniTask<ProfileBackup> BackupProfileInternalAsync(ISaveProfile profile)
 #pragma warning restore CS1998
         {
-            if (profile is not Profile original)
-            {
-                return default(ProfileBackup);
-            }
-
-            var copy = original.Clone();
-            copy.Save();
-            return default(ProfileBackup);
+            throw new NotImplementedException();
         }
 
         #endregion

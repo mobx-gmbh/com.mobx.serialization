@@ -2,6 +2,7 @@
 using MobX.Utilities.Editor.Inspector;
 using System.Collections.Generic;
 using UnityEngine;
+using GUIUtility = MobX.Utilities.Editor.Helper.GUIUtility;
 
 namespace MobX.Serialization.Editor
 {
@@ -9,6 +10,7 @@ namespace MobX.Serialization.Editor
     {
         private UnityEditor.SerializedObject _argsObject;
         private UnityEditor.SerializedProperty _argsProperty;
+        private UnityEditor.Editor _argsEditor;
 
         private UnityEditor.SerializedObject _shutdownArgsObject;
         private UnityEditor.SerializedProperty _shutdownArgsProperty;
@@ -46,16 +48,10 @@ namespace MobX.Serialization.Editor
 
             var labelWidth = UnityEditor.EditorGUIUtility.labelWidth;
             UnityEditor.EditorGUIUtility.labelWidth = 230;
-            if (Foldout["Initialization"])
+            if (Foldout["Editor Settings"])
             {
                 UnityEditor.EditorGUILayout.Space();
                 DrawSetupArguments();
-                UnityEditor.EditorGUILayout.Space();
-            }
-            if (Foldout["Shutdown"])
-            {
-                UnityEditor.EditorGUILayout.Space();
-                DrawShutdownArguments();
                 UnityEditor.EditorGUILayout.Space();
             }
             UnityEditor.EditorGUIUtility.labelWidth = labelWidth;
@@ -79,7 +75,12 @@ namespace MobX.Serialization.Editor
             GUI.enabled = FileSystem.State == FileSystemState.Initialized;
             if (GUILayout.Button("Shutdown"))
             {
-                FileSystem.ShutdownAsync(FileSystemEditorSettings.instance.ShutdownArgs);
+                var shutdownArgs = new FileSystemShutdownArgs
+                {
+                    forceSynchronousShutdown = FileSystemEditorSettings.instance.Args.ForceSynchronousShutdown
+                };
+
+                FileSystem.ShutdownAsync(shutdownArgs);
             }
             GUI.enabled = true;
             if (GUILayout.Button("Storage"))
@@ -89,55 +90,30 @@ namespace MobX.Serialization.Editor
             GUILayout.EndHorizontal();
         }
 
-        private void DrawShutdownArguments()
-        {
-            UnityEditor.EditorGUILayout.LabelField("File System Shutdown");
-            var arguments = FileSystemEditorSettings.instance.FileSystemShutdownArguments;
-            arguments = (FileSystemShutdownArgumentsAsset) UnityEditor.EditorGUILayout.ObjectField("Arguments",
-                arguments, typeof(FileSystemShutdownArgumentsAsset), false);
-            FileSystemEditorSettings.instance.FileSystemShutdownArguments = arguments;
-
-            if (_shutdownArgsProperty != null && arguments == null)
-            {
-                _shutdownArgsObject = null;
-                _shutdownArgsProperty = null;
-            }
-            if (_shutdownArgsProperty == null && arguments != null)
-            {
-                _shutdownArgsObject = new UnityEditor.SerializedObject(arguments);
-                _shutdownArgsProperty = _shutdownArgsObject.FindProperty("args");
-            }
-            if (_shutdownArgsProperty != null && _shutdownArgsObject != null)
-            {
-                _shutdownArgsObject.Update();
-                UnityEditor.EditorGUILayout.PropertyField(_shutdownArgsProperty);
-                _shutdownArgsObject.ApplyModifiedProperties();
-            }
-        }
-
         private void DrawSetupArguments()
         {
-            UnityEditor.EditorGUILayout.LabelField("File System Initialization");
             var arguments = FileSystemEditorSettings.instance.FileSystemArguments;
-            arguments = (FileSystemArgumentsAsset) UnityEditor.EditorGUILayout.ObjectField("Arguments", arguments,
+            arguments = (FileSystemArgumentsAsset) UnityEditor.EditorGUILayout.ObjectField("Settings", arguments,
                 typeof(FileSystemArgumentsAsset), false);
             FileSystemEditorSettings.instance.FileSystemArguments = arguments;
 
-            if (_argsProperty != null && arguments == null)
+            if (arguments != null)
             {
-                _argsObject = null;
-                _argsProperty = null;
+                _argsEditor ??= UnityEditor.Editor.CreateEditor(arguments);
             }
-            if (_argsProperty == null && arguments != null)
+            else
             {
-                _argsObject = new UnityEditor.SerializedObject(arguments);
-                _argsProperty = _argsObject.FindProperty("args");
+                _argsEditor = null;
             }
-            if (_argsProperty != null && _argsObject != null)
+
+            if (_argsEditor != null)
             {
-                _argsObject.Update();
-                UnityEditor.EditorGUILayout.PropertyField(_argsProperty);
-                _argsObject.ApplyModifiedProperties();
+                GUIUtility.IncreaseIndent();
+                GUIUtility.Space();
+                _argsEditor.OnInspectorGUI();
+                GUIUtility.Space();
+                GUIUtility.DecreaseIndent();
+                UnityEditor.EditorUtility.SetDirty(_argsEditor);
             }
         }
 

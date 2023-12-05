@@ -17,13 +17,13 @@ namespace MobX.Serialization
         private readonly bool _skipFileEndingsArray;
         private readonly bool _logMissingFileExtensionWarning;
 
-        internal FileValidator(FileSystemArgs args)
+        internal FileValidator(IFileSystemArgs args)
         {
-            _extension = IsValidFileEnding(args.fileEnding) ? args.fileEnding : ".sav";
-            _skipFileEndingsArray = !args.enforceFileEndings.Enabled;
-            _availableExtensions = args.enforceFileEndings.ValueOrDefault(Array.Empty<string>());
+            _extension = IsValidFileEnding(args.FileEnding) ? args.FileEnding : ".sav";
+            _skipFileEndingsArray = !args.EnforceFileEndings.Enabled;
+            _availableExtensions = args.EnforceFileEndings.ValueOrDefault(Array.Empty<string>());
             ArrayUtility.Add(ref _availableExtensions, _extension);
-            _logMissingFileExtensionWarning = args.logMissingFileExtensionWarning;
+            _logMissingFileExtensionWarning = args.LogMissingFileExtensionWarning;
         }
 
 

@@ -7,7 +7,6 @@
         public readonly string EncryptionKey;
         public readonly LoggingLevel ExceptionLogging;
         public readonly IEncryptionProvider EncryptionProvider;
-        public readonly IEncryptionProvider[] EncryptionProviders;
         public readonly IFileOperations FileOperations;
 
         public FileStorageArguments(
@@ -15,7 +14,6 @@
             string encryptionKey,
             IEncryptionProvider encryptionProvider,
             LoggingLevel exceptionLogging,
-            IEncryptionProvider[] encryptionProviders,
             bool forceSynchronous,
             IFileOperations fileOperations)
         {
@@ -23,7 +21,6 @@
             EncryptionKey = encryptionKey;
             ExceptionLogging = exceptionLogging;
             EncryptionProvider = encryptionProvider;
-            EncryptionProviders = encryptionProviders;
             ForceSynchronous = forceSynchronous;
             FileOperations = fileOperations;
         }

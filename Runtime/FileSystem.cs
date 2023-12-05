@@ -35,7 +35,7 @@ namespace MobX.Serialization
         /// </summary>
         /// <exception cref="FileSystemNotInitializedException"></exception>
         [PublicAPI]
-        public static IProfile Profile => IsInitialized
+        public static ISaveProfile Profile => IsInitialized
             ? activeProfile
             : throw new FileSystemNotInitializedException(nameof(Profile));
 
@@ -46,7 +46,7 @@ namespace MobX.Serialization
         /// </summary>
         /// <exception cref="FileSystemNotInitializedException"></exception>
         [PublicAPI]
-        public static IProfile SharedProfile => IsInitialized
+        public static ISaveProfile SharedProfile => IsInitialized
             ? sharedProfile
             : throw new FileSystemNotInitializedException(nameof(SharedProfile));
 
@@ -55,7 +55,7 @@ namespace MobX.Serialization
         /// </summary>
         /// <exception cref="FileSystemNotInitializedException"></exception>
         [PublicAPI]
-        public static IReadOnlyCollection<IProfile> Profiles => IsInitialized
+        public static IReadOnlyCollection<ISaveProfile> Profiles => IsInitialized
             ? profileCache.Values
             : throw new FileSystemNotInitializedException(nameof(SharedProfile));
 
@@ -136,12 +136,12 @@ namespace MobX.Serialization
 
         #region Initialize
 
-        public static UniTask InitializeAsync(in FileSystemArgs args = new())
+        public static UniTask InitializeAsync(IFileSystemArgs args = null)
         {
             return InitializeAsyncInternal(args);
         }
 
-        public static void Initialize(in FileSystemArgs args = new())
+        public static void Initialize(IFileSystemArgs args = null)
         {
             InitializeInternal(args);
         }
@@ -166,14 +166,14 @@ namespace MobX.Serialization
 
         #region Profile Switching
 
-        public static UniTask<bool> SwitchProfileAsync(IProfile profile)
+        public static UniTask<bool> SwitchProfileAsync(ISaveProfile profile)
         {
-            return UpdateActiveProfileAsyncInternal(profile as Profile);
+            return UpdateActiveProfileAsyncInternal(profile as SaveProfile);
         }
 
-        public static bool SwitchProfile(IProfile profile)
+        public static bool SwitchProfile(ISaveProfile profile)
         {
-            return UpdateActiveProfileInternal(profile as Profile);
+            return UpdateActiveProfileInternal(profile as SaveProfile);
         }
 
         #endregion
@@ -196,14 +196,14 @@ namespace MobX.Serialization
 
         #region Profile Deleting
 
-        public static UniTask DeleteProfileAsync(IProfile profile)
+        public static UniTask DeleteProfileAsync(ISaveProfile profile)
         {
-            return DeleteProfileAsyncInternal(profile as Profile);
+            return DeleteProfileAsyncInternal(profile as SaveProfile);
         }
 
-        public static void DeleteProfile(IProfile profile)
+        public static void DeleteProfile(ISaveProfile profile)
         {
-            DeleteProfileInternal(profile as Profile);
+            DeleteProfileInternal(profile as SaveProfile);
         }
 
         public static UniTask DeleteProfileAsync(string profileName)
@@ -221,14 +221,14 @@ namespace MobX.Serialization
 
         #region Profile Reset
 
-        public static UniTask ResetProfileAsync(IProfile profile)
+        public static UniTask ResetProfileAsync(ISaveProfile profile)
         {
-            return ResetProfileAsyncInternal(profile as Profile);
+            return ResetProfileAsyncInternal(profile as SaveProfile);
         }
 
-        public static void ResetProfile(IProfile profile)
+        public static void ResetProfile(ISaveProfile profile)
         {
-            ResetProfileInternal(profile as Profile);
+            ResetProfileInternal(profile as SaveProfile);
         }
 
         public static UniTask ResetProfileAsync(string profileName)
@@ -270,12 +270,12 @@ namespace MobX.Serialization
             throw new NotImplementedException();
         }
 
-        public static UniTask<ProfileBackup> BackupProfileAsync(IProfile profile)
+        public static UniTask<ProfileBackup> BackupProfileAsync(ISaveProfile profile)
         {
             throw new NotImplementedException();
         }
 
-        public static ProfileBackup BackupProfile(IProfile profile)
+        public static ProfileBackup BackupProfile(ISaveProfile profile)
         {
             throw new NotImplementedException();
         }
