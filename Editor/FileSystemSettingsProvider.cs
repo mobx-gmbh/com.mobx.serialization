@@ -122,5 +122,11 @@ namespace MobX.Serialization.Editor
         {
             return new FileSystemSettingsProvider("Project/MobX/File System", UnityEditor.SettingsScope.Project);
         }
+
+        [UnityEditor.MenuItem("MobX/Settings/File System", priority = 5000)]
+        public static void MenuItem()
+        {
+            UnityEditor.SettingsService.OpenProjectSettings("Project/MobX/File System");
+        }
     }
 }
