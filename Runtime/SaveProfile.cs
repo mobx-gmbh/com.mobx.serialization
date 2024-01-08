@@ -87,7 +87,6 @@ namespace MobX.Serialization
             };
             if (files.AddUnique(header))
             {
-                Debug.Log("Added unique header");
                 var profileFilePath = ProfileFilePath;
                 FileSystem.Validator.ValidateFileName(ref profileFilePath);
                 FileSystem.Storage.Save(profileFilePath, this);
