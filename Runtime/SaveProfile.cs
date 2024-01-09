@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace MobX.Serialization
 {
@@ -205,6 +206,7 @@ namespace MobX.Serialization
 
         public bool HasFile(string fileName)
         {
+            Assert.IsTrue(IsLoaded);
             FileSystem.Validator.ValidateFileName(ref fileName);
             foreach (var header in files)
             {
@@ -294,12 +296,12 @@ namespace MobX.Serialization
                 if (type != null && type.GetGenericTypeDefinition() == typeof(SaveData<>))
                 {
                     var typedFileData = FileSystem.Storage.Load(filePath, type);
-                    _loadedSaveDataCache.Add(header.fileName, (SaveData) typedFileData.Read());
+                    _loadedSaveDataCache.AddOrUpdate(header.fileName, (SaveData) typedFileData.Read());
                 }
                 else
                 {
                     var fileData = FileSystem.Storage.Load(filePath);
-                    _loadedFileDataCache.Add(header.fileName, fileData);
+                    _loadedFileDataCache.AddOrUpdate(header.fileName, fileData);
                 }
             }
             IsLoaded = true;
