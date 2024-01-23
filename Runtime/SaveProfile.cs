@@ -34,7 +34,8 @@ namespace MobX.Serialization
 
         public string DisplayName => profileDisplayName;
         public string FolderName => profileFolderName;
-        public DateTime CreatedTimeStamp => DateTime.Parse(createdTimeStamp);
+        public DateTime CreatedTimeStamp =>
+            DateTime.TryParse(createdTimeStamp, out var timeStamp) ? timeStamp : DateTime.Now;
         public bool IsLoaded { get; private set; }
         public string ProfileFilePath => Path.Combine(profileFolderName, profileFileName);
         public SaveProfileData Info => new(DisplayName, FolderName, CreatedTimeStamp, ProfileFilePath, files);
