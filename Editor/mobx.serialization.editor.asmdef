@@ -1,21 +1,23 @@
 {
-    "name": "mobx.serialization.editor",
-    "rootNamespace": "MobX.Serialization",
-    "references": [
-        "GUID:451c7863c31cdec4fbc99d53f3082b53",
-        "GUID:2b03cf6b0ac5d23419bed626562b55fb",
-        "GUID:f51ebe6a0ceec4240a699833d6309b23",
-        "GUID:b36315b18db27a54aa4a0451d8b88701"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "mobx.serialization.editor",
+  "rootNamespace": "MobX.Serialization",
+  "references": [
+    "GUID:451c7863c31cdec4fbc99d53f3082b53",
+    "GUID:2b03cf6b0ac5d23419bed626562b55fb",
+    "GUID:f51ebe6a0ceec4240a699833d6309b23",
+    "GUID:b36315b18db27a54aa4a0451d8b88701",
+    "GUID:06a3c3218ef731343985f180249a8161",
+    "GUID:ffd42dcff86317b4584e4e050d4e924d"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }
